@@ -1,30 +1,28 @@
+import random
 import awsgi
 from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-@app.route('/')
-def intex():
-    return jsonify(status=200, message='OK')
-
-@app.route('/monitor')
-def monitor():
-    return jsonify(status= 200, message= 'Echo: I\'m good')
+def simulate_error():
+    """Simula un error con una probabilidad del 2%."""
+    return random.random() < 0.02
 
 @app.route('/health')
 def health_data():
-    health_metrics = {
-        "frecuencia cardíaca": 72,  # bpm 
-        "ftp": 250,                 # Functional Threshold Power en watts 
-        "saturación": 98,           # Porcentaje de saturación de oxígeno
-        "velocidad": 5.5,           # km/h
-        "distancia recorrida": 10.2 # Km
-    }
+    """Endpoint para obtener los datos de salud."""
+    if simulate_error():
+        return jsonify(status=500, error="Internal Server Error")
+    else:
+        health_metrics = {
+            "frecuencia cardíaca": 72,        # bpm 
+            "potencia umbral funcional": 250,  # en watts 
+            "saturación de oxígeno": 98,       # Porcentaje
+            "velocidad": 5.5,                  # en km/h
+            "distancia recorrida": 10.2        # en km
+        }
+        return jsonify(status=200, data=health_metrics)
 
 def lambda_handler(event, context):
+    """Handler para AWS Lambda."""
     return awsgi.response(app, event, context, base64_content_types={"image/png"})
-
-if __name__ == "__lambda_function__":
-    app.run()
-
-    # modificar el código
